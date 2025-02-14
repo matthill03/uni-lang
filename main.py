@@ -204,12 +204,12 @@ class Parser:
             return num
 
         if self.peek().kind == TokenKind.tok_open_paren:
-            self.advance()  # Consume '('
-            expr = self.parse_bin_expr()  # Parse the inner expression
-            self.advance_with_expected([TokenKind.tok_close_paren])  # Expect ')'
+            self.advance()  # (
+            expr = self.parse_bin_expr()
+            self.advance_with_expected([TokenKind.tok_close_paren])  # )
             return expr
 
-        raise ValueError(f"Unexpected token: {self.peek().kind}")
+        raise ValueError(f"Unexpected token ({self.peek().kind})")
 
     def parse_bin_expr(self, min_precedence=0):
         lhs = self.parse_primary()
