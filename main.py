@@ -1,7 +1,5 @@
 from enum import Enum
 
-
-
 class TokenKind(Enum):
     # Literals
     tok_digit = 0,
@@ -152,7 +150,15 @@ class BinaryOp(ASTNode):
         self.rhs = rhs
 
     def __str__(self):
-        return f"lhs: {self.lhs}, op: {self.op}, rhs: {self.rhs}"
+        return f"(lhs: {self.lhs}, op: {self.op}, rhs: {self.rhs})"
+
+PRECEDENCE = {
+    TokenKind.tok_dash: 1,
+    TokenKind.tok_plus: 2,
+    TokenKind.tok_star: 3,
+    TokenKind.tok_fslash: 4,
+    TokenKind.tok_percent: 4
+}
 
 class Parser:
     def __init__(self, tokens):
@@ -170,11 +176,11 @@ class Parser:
 
     def advance_with_expected(self, expected_kinds):
         for kind in expected_kinds:
-            if self.peek_offset(1).kind == kind:
+            if self.peek().kind == kind:
                 self.advance()
                 return
 
-        print("Unexpected token")
+        print(f"Unexpected token ({self.peek().kind}), wanted -> {expected_kinds}")
         exit(1)
 
     def get_next(self):
@@ -183,22 +189,77 @@ class Parser:
 
         return next_token
 
-    def parse_bin_expr(self):
-        lhs = Number(self.peek().value)
+    def parse_value(self):
+        if self.peek().kind == TokenKind.tok_digit:
+            return Number(self.peek().value)
 
-        if self.peek_offset(1).kind == TokenKind.tok_semi:
-            self.advance_with_expected([TokenKind.tok_semi])
-            self.advance_with_expected([TokenKind.tok_digit])
-            return Number(lhs.value)
+    def parse_operator(self):
+        if self.peek().kind in BINARY_0PERATORS:
+            return Operator(self.peek().value)
 
-        self.advance_with_expected(BINARY_0PERATORS)
+    def parse_primary(self):
+        if self.peek().kind == TokenKind.tok_digit:
+            num = Number(self.peek().value)
+            self.advance()
+            return num
 
-        op = Operator(self.peek().value)
-        self.advance_with_expected([TokenKind.tok_digit])
+        if self.peek().kind == TokenKind.tok_open_paren:
+            self.advance()  # Consume '('
+            expr = self.parse_bin_expr()  # Parse the inner expression
+            self.advance_with_expected([TokenKind.tok_close_paren])  # Expect ')'
+            return expr
 
-        rhs = self.parse_bin_expr()
+        raise ValueError(f"Unexpected token: {self.peek().kind}")
 
-        return BinaryOp(lhs, op, rhs)
+    def parse_bin_expr(self, min_precedence=0):
+        lhs = self.parse_primary()
+
+        while self.peek().kind in PRECEDENCE and PRECEDENCE[self.peek().kind] >= min_precedence:
+            if self.peek().kind == TokenKind.tok_semi:
+                break
+
+            op = self.parse_operator()
+            op_precendence = PRECEDENCE[self.peek().kind]
+            self.advance()
+
+            rhs = self.parse_bin_expr(op_precendence + 1)
+
+            lhs = BinaryOp(lhs, op, rhs)
+
+        return lhs
+
+
+    # def parse_bin_expr(self):
+    #     if self.peek().kind == TokenKind.tok_digit and self.peek_offset(1).kind not in BINARY_0PERATORS:
+    #         return Number(self.peek().value)
+    #
+    #     if self.peek().kind == TokenKind.tok_open_paren:
+    #         self.advance() # (
+    #         expr = self.parse_bin_expr() # expression
+    #         self.advance_with_expected([TokenKind.tok_close_paren]) # )
+    #
+    #         if self.peek_offset(1).kind in BINARY_0PERATORS:
+    #             self.advance_with_expected(BINARY_0PERATORS)
+    #
+    #             op = self.parse_operator()
+    #             self.advance_with_expected([TokenKind.tok_digit, TokenKind.tok_open_paren])
+    #
+    #             rhs = self.parse_bin_expr()
+    #             return BinaryOp(expr, op, rhs)
+    #
+    #         return expr
+    #
+    #     self.advance_with_expected(BINARY_0PERATORS)
+    #
+    #     lhs = Number(self.peek_offset(-1).value)
+    #
+    #     op = self.parse_operator()
+    #     self.advance_with_expected([TokenKind.tok_digit, TokenKind.tok_open_paren])
+    #
+    #     rhs = self.parse_bin_expr()
+    #
+    #     return BinaryOp(lhs, op, rhs)
+
 
 def is_binary_op(token):
 
@@ -215,11 +276,12 @@ def parse(tokens):
         exit(1)
 
     while parser.peek().kind != TokenKind.tok_eof:
-        # token = parser.get_next()
+        expr = parser.parse_bin_expr()
 
-        if is_binary_op(parser.peek_offset(1)):
-            bin_op = parser.parse_bin_expr()
-            print(bin_op)
+        print(expr)
+
+        if parser.peek().kind == TokenKind.tok_semi:
+            parser.advance()
 
 
 if __name__ == "__main__":
