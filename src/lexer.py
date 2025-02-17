@@ -134,7 +134,7 @@ def lex(file_path):
     tokens = []
     while True:
         token = lexer.next_token()
-        print(token)
+        # print(token)
 
         tokens.append(token)
 

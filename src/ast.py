@@ -16,7 +16,23 @@ class Number(ASTNode):
 
     def __str__(self):
         return f"{self.value}"
-    
+
+    def evaluate(self):
+        return self.value
+
+class Boolean(ASTNode):
+    def __init__(self, value):
+        if value == "true":
+            self.value = True
+        elif value == "false":
+            self.value = False
+        else:
+            print(f"Invalid bool type ({value})")
+            exit(1)
+
+    def __str__(self):
+        return f"{self.value}"
+
     def evaluate(self):
         return self.value
 
@@ -29,6 +45,23 @@ class Operator(ASTNode):
 
     def evaluate(self):
         return self.value
+
+class UnaryExpr(ASTNode):
+    def __init__(self, op, stmt):
+        self.op = op
+        self.stmt = stmt
+
+    def __str__(self):
+        return f"(op: {self.op}, stmt: {self.stmt})"
+
+    def evaluate(self):
+        operand = self.stmt.evaluate()
+        op = self.op.evaluate()
+
+        if op == '!':
+            return not operand
+        else:
+            print(f"Unknown unary operator ({op})")
 
 class BinaryExpr(ASTNode):
     def __init__(self, lhs, op, rhs):
@@ -54,13 +87,36 @@ class BinaryExpr(ASTNode):
             return lhs / rhs
         elif op == '%':
             return lhs % rhs
+        elif op == '==':
+            return lhs == rhs
+        elif op == '!=':
+            return lhs != rhs
+        elif op == '<':
+            return lhs < rhs
+        elif op == '>':
+            return lhs > rhs
+        elif op == '&&':
+            return lhs and rhs
+        elif op == '||':
+            return lhs or rhs
         else:
             print(f"Unknown Operator ({self.op.value})")
 
 PRECEDENCE = {
+    # Maths
     TokenKind.tok_dash: 1,
     TokenKind.tok_plus: 1,
     TokenKind.tok_star: 2,
     TokenKind.tok_fslash: 2,
-    TokenKind.tok_percent: 2
+    TokenKind.tok_percent: 2,
+
+    # Comparison
+    TokenKind.tok_lt: 3,
+    TokenKind.tok_gt: 3,
+    TokenKind.tok_equal: 4,
+    TokenKind.tok_not_equal: 4,
+
+    # Logical
+    TokenKind.tok_and_op: 5,
+    TokenKind.tok_or_op: 5,
 }

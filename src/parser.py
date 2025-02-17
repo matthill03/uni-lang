@@ -35,7 +35,7 @@ class Parser:
             return ast.Number(self.peek().value)
 
     def parse_operator(self):
-        if self.peek().kind in token.BINARY_0PERATORS:
+        if self.peek().kind in token.OPERATORS:
             return ast.Operator(self.peek().value)
 
     def parse_primary(self):
@@ -43,6 +43,22 @@ class Parser:
             num = ast.Number(self.peek().value)
             self.advance()
             return num
+
+        if self.peek().kind == token.TokenKind.tok_true:
+            bol = ast.Boolean(self.peek().value)
+            self.advance()
+            return bol
+
+        if self.peek().kind == token.TokenKind.tok_false:
+            bol = ast.Boolean(self.peek().value)
+            self.advance()
+            return bol
+
+        if self.peek().kind == token.TokenKind.tok_not_op:
+            op = self.parse_operator()
+            self.advance() # !
+            operand = self.parse_primary()
+            return ast.UnaryExpr(op, operand)
 
         if self.peek().kind == token.TokenKind.tok_open_paren:
             self.advance()  # (
@@ -78,6 +94,7 @@ def parse(tokens):
 
     while parser.peek().kind != token.TokenKind.tok_eof:
         expr = parser.parse_bin_expr()
+        print(expr)
         print(expr.evaluate())
         
         if parser.peek().kind == token.TokenKind.tok_semi:
