@@ -13,26 +13,17 @@ class Parser:
         return self.tokens[self.position + offset]
 
     def advance(self):
+        if self.position + 1 >= len(self.tokens):
+            return
+
         self.position += 1
 
     def advance_with_expected(self, expected_kinds):
-        for kind in expected_kinds:
-            if self.peek().kind == kind:
-                self.advance()
-                return
+        if self.peek().kind not in expected_kinds:
+            print(f"Unexpected token ({self.peek().kind}), wanted -> {expected_kinds}")
+            exit(1)
 
-        print(f"Unexpected token ({self.peek().kind}), wanted -> {expected_kinds}")
-        exit(1)
-
-    def get_next(self):
-        next_token = self.tokens[self.position]
         self.advance()
-
-        return next_token
-
-    def parse_value(self):
-        if self.peek().kind == token.TokenKind.tok_digit:
-            return ast.Number(self.peek().value)
 
     def parse_operator(self):
         if self.peek().kind in token.OPERATORS:
@@ -74,6 +65,9 @@ class Parser:
         raise ValueError(f"Unexpected token ({self.peek().kind})")
 
     def parse_bin_expr(self, min_precedence=0):
+        if self.peek().kind == token.TokenKind.tok_semi:
+            return
+
         lhs = self.parse_primary()
 
         while self.peek().kind in ast.PRECEDENCE and ast.PRECEDENCE[self.peek().kind] >= min_precedence:
@@ -92,15 +86,13 @@ class Parser:
 
 def parse(tokens):
     parser = Parser(tokens)
-
-    if tokens[-1].kind != token.TokenKind.tok_eof:
-        print("End of file token should be at the end of the list!")
-        exit(1)
-
-    while parser.peek().kind != token.TokenKind.tok_eof:
+    while parser.position < len(parser.tokens):
         expr = parser.parse_bin_expr()
         # print(expr)
+
+        if expr == None:
+            break;
+
         print(expr.evaluate())
 
-        if parser.peek().kind == token.TokenKind.tok_semi:
-            parser.advance()
+        parser.advance_with_expected([token.TokenKind.tok_semi])
