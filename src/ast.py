@@ -104,19 +104,19 @@ class BinaryExpr(ASTNode):
 
 PRECEDENCE = {
     # Maths
-    TokenKind.tok_dash: 1,
-    TokenKind.tok_plus: 1,
-    TokenKind.tok_star: 2,
-    TokenKind.tok_fslash: 2,
-    TokenKind.tok_percent: 2,
+    TokenKind.tok_star: 6,
+    TokenKind.tok_fslash: 6,
+    TokenKind.tok_percent: 6,
+    TokenKind.tok_dash: 5,
+    TokenKind.tok_plus: 5,
 
     # Comparison
-    TokenKind.tok_lt: 3,
-    TokenKind.tok_gt: 3,
-    TokenKind.tok_equal: 4,
-    TokenKind.tok_not_equal: 4,
+    TokenKind.tok_lt: 4,
+    TokenKind.tok_gt: 4,
+    TokenKind.tok_equal: 3,
+    TokenKind.tok_not_equal: 3,
 
     # Logical
-    TokenKind.tok_and_op: 5,
-    TokenKind.tok_or_op: 5,
+    TokenKind.tok_and_op: 2,
+    TokenKind.tok_or_op: 1,
 }
