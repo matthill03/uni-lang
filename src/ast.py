@@ -93,8 +93,12 @@ class BinaryExpr(ASTNode):
             return lhs != rhs
         elif op == '<':
             return lhs < rhs
+        elif op == '<=':
+            return lhs <= rhs
         elif op == '>':
             return lhs > rhs
+        elif op == '>=':
+            return lhs >= rhs
         elif op == '&&':
             return lhs and rhs
         elif op == '||':
@@ -112,7 +116,9 @@ PRECEDENCE = {
 
     # Comparison
     TokenKind.tok_lt: 4,
+    TokenKind.tok_lt_equal: 4,
     TokenKind.tok_gt: 4,
+    TokenKind.tok_gt_equal: 4,
     TokenKind.tok_equal: 3,
     TokenKind.tok_not_equal: 3,
 

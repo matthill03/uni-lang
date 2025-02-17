@@ -94,8 +94,8 @@ def parse(tokens):
 
     while parser.peek().kind != token.TokenKind.tok_eof:
         expr = parser.parse_bin_expr()
-        print(expr)
+        # print(expr)
         print(expr.evaluate())
-        
+
         if parser.peek().kind == token.TokenKind.tok_semi:
             parser.advance()

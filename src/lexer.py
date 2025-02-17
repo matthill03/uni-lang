@@ -69,9 +69,17 @@ class Lexer:
             self.advance()
             return Token(TokenKind.tok_semi, self.src[self.position - 1:self.position], self.line, self.column)
         elif value == '>':
+            if self.peek_offset(1) == '=':
+                self.advance_n(2)
+                return Token(TokenKind.tok_gt_equal, self.src[self.position - 2:self.position], self.line, self.column)
+
             self.advance()
             return Token(TokenKind.tok_gt, self.src[self.position - 1:self.position], self.line, self.column)
         elif value == '<':
+            if self.peek_offset(1) == '=':
+                self.advance_n(2)
+                return Token(TokenKind.tok_lt_equal, self.src[self.position - 2:self.position], self.line, self.column)
+
             self.advance()
             return Token(TokenKind.tok_lt, self.src[self.position - 1:self.position], self.line, self.column)
         elif value == '!':
@@ -122,8 +130,14 @@ class Lexer:
 
         if self.peek().isdigit():
             begin = self.position
-            while self.peek().isdigit() or self.peek() == '.':
+            has_dec_point = False
+
+            while self.peek().isdigit() or (self.peek() == '.' and not has_dec_point):
                 self.advance() 
+
+                if self.peek() == '.':
+                    has_dec_point = True
+
             end = self.position
             return Token(TokenKind.tok_digit, self.src[begin:end], self.line, self.column)
 
