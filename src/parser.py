@@ -39,8 +39,13 @@ class Parser:
             return ast.Operator(self.peek().value)
 
     def parse_primary(self):
-        if self.peek().kind == token.TokenKind.tok_digit:
-            num = ast.Number(self.peek().value)
+        if self.peek().kind == token.TokenKind.tok_int:
+            num = ast.Number(self.peek().value, ast.LiteralType.type_int)
+            self.advance()
+            return num
+
+        if self.peek().kind == token.TokenKind.tok_float:
+            num = ast.Number(self.peek().value, ast.LiteralType.type_float)
             self.advance()
             return num
 

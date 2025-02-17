@@ -1,5 +1,10 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from token import TokenKind
+
+class LiteralType(Enum):
+    type_int = 0,
+    type_float = 1,
 
 class ASTNode(ABC):
     @abstractmethod
@@ -11,11 +16,19 @@ class ASTNode(ABC):
         pass
 
 class Number(ASTNode):
-    def __init__(self, value):
-        self.value = int(value)
+    def __init__(self, value, type):
+        self.type = type
+
+        if type == LiteralType.type_float:
+            self.value = float(value)
+        elif type == LiteralType.type_int:
+            self.value = int(value)
+        else:
+            print(f"Invalid number literal type ({type})")
+            exit(1)
 
     def __str__(self):
-        return f"{self.value}"
+        return f"(value: {self.value}, type: {self.type})"
 
     def evaluate(self):
         return self.value
@@ -27,7 +40,7 @@ class Boolean(ASTNode):
         elif value == "false":
             self.value = False
         else:
-            print(f"Invalid bool type ({value})")
+            print(f"Invalid bool literal ({value})")
             exit(1)
 
     def __str__(self):

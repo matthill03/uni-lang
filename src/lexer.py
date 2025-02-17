@@ -133,13 +133,17 @@ class Lexer:
             has_dec_point = False
 
             while self.peek().isdigit() or (self.peek() == '.' and not has_dec_point):
-                self.advance() 
-
                 if self.peek() == '.':
                     has_dec_point = True
 
+                self.advance() 
             end = self.position
-            return Token(TokenKind.tok_digit, self.src[begin:end], self.line, self.column)
+
+            value = self.src[begin:end]
+            if '.' in value:
+                return Token(TokenKind.tok_float, value, self.line, self.column)
+
+            return Token(TokenKind.tok_int, value, self.line, self.column)
 
         return self.handle_delimiter(self.peek())
 

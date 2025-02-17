@@ -2,7 +2,8 @@ from enum import Enum
 
 class TokenKind(Enum):
     # Literals
-    tok_digit = 0,
+    tok_int = 0,
+    tok_float = 25,
     tok_id = 1,
 
     # Delimiters
@@ -58,7 +59,9 @@ BINARY_0PERATORS = [TokenKind.tok_plus, TokenKind.tok_dash, TokenKind.tok_fslash
 COMP_0PERATORS = [TokenKind.tok_gt, TokenKind.tok_lt, TokenKind.tok_equal, TokenKind.tok_not_equal, TokenKind.tok_gt_equal, TokenKind.tok_lt_equal]
 LOGIGAL_OPERATORS = [TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_not_op]
 
-OPERATORS = [TokenKind.tok_plus, TokenKind.tok_dash, TokenKind.tok_fslash, TokenKind.tok_percent, TokenKind.tok_star, TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_not_op, TokenKind.tok_gt, TokenKind.tok_lt, TokenKind.tok_equal, TokenKind.tok_not_equal, TokenKind.tok_gt_equal, TokenKind.tok_lt_equal ]
+OPERATORS = [TokenKind.tok_plus, TokenKind.tok_dash, TokenKind.tok_fslash, TokenKind.tok_percent, TokenKind.tok_star, TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_not_op, TokenKind.tok_gt, TokenKind.tok_lt, TokenKind.tok_equal, TokenKind.tok_not_equal, TokenKind.tok_gt_equal, TokenKind.tok_lt_equal]
+
+DIGITS = [TokenKind.tok_int, TokenKind.tok_float]
 
 # -------------- HELPERS -------------- 
 def is_binary_op(token):
