@@ -4,6 +4,7 @@ class TokenKind(Enum):
     # Literals
     tok_int = 0,
     tok_float = 25,
+    tok_string = 26,
     tok_id = 1,
 
     # Delimiters

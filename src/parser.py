@@ -40,6 +40,11 @@ class Parser:
             self.advance()
             return num
 
+        if self.peek().kind == token.TokenKind.tok_string:
+            num = ast.String(self.peek().value)
+            self.advance()
+            return num
+
         if self.peek().kind == token.TokenKind.tok_true:
             bol = ast.Boolean(self.peek().value)
             self.advance()
@@ -88,11 +93,10 @@ def parse(tokens):
     parser = Parser(tokens)
     while parser.position < len(parser.tokens):
         expr = parser.parse_bin_expr()
-        # print(expr)
 
         if expr == None:
             break;
 
-        print(expr.evaluate())
-
         parser.advance_with_expected([token.TokenKind.tok_semi])
+        print(expr)
+        print(expr.evaluate())

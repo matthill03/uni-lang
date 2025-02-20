@@ -101,6 +101,16 @@ class Lexer:
 
             self.advance()
             return Token(TokenKind.tok_bit_or_op, '|', self.line, self.column)
+        elif value == '"':
+            self.advance() # "
+            begin = self.position
+
+            while (self.position < len(self.src)) and self.src[self.position] != '"':
+                self.advance()
+
+            end = self.position
+            self.advance() # "
+            return Token(TokenKind.tok_string, self.src[begin:end], self.line, self.column)
 
     def tokenize(self):
         tokens = []

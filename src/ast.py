@@ -49,6 +49,16 @@ class Boolean(ASTNode):
     def evaluate(self):
         return self.value
 
+class String(ASTNode):
+    def __init__(self, value):
+        self.value = str(value)
+
+    def __str__(self):
+        return f'"{self.value}"'
+
+    def evaluate(self):
+        return self.value
+
 class Operator(ASTNode):
     def __init__(self, op):
         self.value = op
