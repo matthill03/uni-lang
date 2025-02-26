@@ -1,4 +1,4 @@
-from token import TokenKind, Token
+from tokens import TokenKind, Token
 
 class Lexer:
     def __init__(self, src):
@@ -31,6 +31,14 @@ class Lexer:
             return Token(TokenKind.tok_true, value, self.line, self.column)
         elif value == "false":
             return Token(TokenKind.tok_false, value, self.line, self.column)
+        elif value == "i32":
+            return Token(TokenKind.tok_key_i32, value, self.line, self.column)
+        elif value == "bool":
+            return Token(TokenKind.tok_key_bool, value, self.line, self.column)
+        elif value == "string":
+            return Token(TokenKind.tok_key_string, value, self.line, self.column)
+        elif value == "echo":
+            return Token(TokenKind.tok_echo, value, self.line, self.column)
         else:
             return Token(TokenKind.tok_id, value, self.line, self.column)
 
@@ -59,6 +67,9 @@ class Lexer:
         elif value == ';':
             self.advance()
             return Token(TokenKind.tok_semi, ';', self.line, self.column)
+        elif value == ':':
+            self.advance()
+            return Token(TokenKind.tok_colon, ':', self.line, self.column)
         elif value == '>':
             if self.peek_offset(1) == '=':
                 self.advance_n(2)

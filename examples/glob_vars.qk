@@ -1,0 +1,17 @@
+number_one: i32 = 10;
+number_two: i32 = 10;
+result_num: i32 = number_one + number_two;
+
+echo(result_num);
+
+bool_one: bool = true;
+bool_two: bool = false;
+result_bool: bool = bool_one || bool_two;
+
+echo(result_bool);
+
+string_one: string = "hello ";
+string_two: string = "world";
+result_string: string = string_one + string_two;
+
+echo(result_string);

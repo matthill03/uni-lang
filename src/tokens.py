@@ -11,10 +11,20 @@ class TokenKind(Enum):
     tok_open_paren = 2,
     tok_close_paren = 3,
     tok_semi = 4,
+    tok_colon = 31,
 
     # Keywords
+    # Reserved Words
     tok_true = 5,
     tok_false = 6,
+
+    # Builtin
+    tok_echo = 27,
+
+    # Types
+    tok_key_i32 = 28,
+    tok_key_bool = 29,
+    tok_key_string = 30,
 
     # Operators
     # Maths
@@ -63,6 +73,8 @@ LOGIGAL_OPERATORS = [TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_no
 OPERATORS = [TokenKind.tok_plus, TokenKind.tok_dash, TokenKind.tok_fslash, TokenKind.tok_percent, TokenKind.tok_star, TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_not_op, TokenKind.tok_gt, TokenKind.tok_lt, TokenKind.tok_equal, TokenKind.tok_not_equal, TokenKind.tok_gt_equal, TokenKind.tok_lt_equal]
 
 DIGITS = [TokenKind.tok_int, TokenKind.tok_float]
+
+TYPES = [TokenKind.tok_key_bool, TokenKind.tok_key_i32, TokenKind.tok_key_string]
 
 # -------------- HELPERS -------------- 
 def is_binary_op(token):
