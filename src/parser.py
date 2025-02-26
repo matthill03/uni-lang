@@ -44,6 +44,17 @@ class Parser:
         self.advance_with_expected([tokens.TokenKind.tok_semi])
 
         return ast.VariableDeclaration(var_name, var_type, var_value)
+    
+    def parse_variable_assignment(self):
+        # identifier = value;
+        var_name = self.peek().value # identifier
+        self.advance_with_expected([tokens.TokenKind.tok_id])
+        self.advance_with_expected([tokens.TokenKind.tok_assign])
+
+        var_value = self.parse_bin_expr() # value
+        self.advance_with_expected([tokens.TokenKind.tok_semi])
+
+        return ast.VariableAssignment(var_name, var_value)
 
     def parse_primary(self):
         if self.peek().kind == tokens.TokenKind.tok_int:
@@ -95,7 +106,7 @@ class Parser:
             param = self.parse_bin_expr()
 
             self.advance_with_expected([tokens.TokenKind.tok_close_paren])  # )
-            # self.advance_with_expected([tokens.TokenKind.tok_semi])
+            self.advance_with_expected([tokens.TokenKind.tok_semi])
 
             echo_node = ast.EchoBuiltin(param)
             return echo_node
@@ -130,8 +141,18 @@ def parse(token_array):
 
         if parser.peek().kind == tokens.TokenKind.tok_id and parser.peek_offset(1).kind == tokens.TokenKind.tok_colon:
             var_decl = parser.parse_variable_declaration()
-            print(var_decl)
+            if var_decl == None:
+                break
+
+            # print(var_decl)
             root.append_child(var_decl)
+        elif parser.peek().kind == tokens.TokenKind.tok_id and parser.peek_offset(1).kind == tokens.TokenKind.tok_assign:
+            var_assign = parser.parse_variable_assignment()
+            if var_assign == None:
+                break
+
+            # print(var_decl)
+            root.append_child(var_assign)
         else:
             expr = parser.parse_bin_expr()
 
