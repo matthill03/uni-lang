@@ -1,6 +1,11 @@
 from enum import Enum
 from tokens import TokenKind
 
+class SymbolTableEntry:
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
+
 class ASTContext:
     def __init__(self):
         self.variables = {}
@@ -11,21 +16,23 @@ class ASTContext:
         
         return self.variables[var_name]
 
-    def set_new_variable(self, var_name, value):
+    def set_new_variable(self, var_name, type, value):
         if var_name in self.variables:
             raise ValueError(f"Variable already exists ({var_name})")
         
-        self.variables[var_name] = value
+        self.variables[var_name] = SymbolTableEntry(type, value)
 
     def set_existing_variable(self, var_name, value):
         if var_name not in self.variables:
             raise ValueError(f"Undefined variable ({var_name})")
 
-        self.variables[var_name] = value
+        self.variables[var_name].value = value
 
 class LiteralType(Enum):
-    type_int = 0,
+    type_i32 = 0,
     type_float = 1,
+    type_string = 2,
+    type_bool = 3,
 
 class ASTNodeKind(Enum):
     # Root
@@ -67,7 +74,7 @@ class Number(ASTRoot):
 
         if type == LiteralType.type_float:
             self.value = float(value)
-        elif type == LiteralType.type_int:
+        elif type == LiteralType.type_i32:
             self.value = int(value)
         else:
             print(f"Invalid number literal type ({type})")
@@ -77,7 +84,7 @@ class Number(ASTRoot):
         return f"(value: {self.value}, type: {self.type})"
 
     def evaluate(self, context):
-        return self.value
+        return (self.value, self.type)
     
 class Identifier(ASTRoot):
     def __init__(self, value):
@@ -88,11 +95,13 @@ class Identifier(ASTRoot):
         return f"(Value: {self.value})"
     
     def evaluate(self, context):
-        return context.get_variable(self.value)
+        var = context.get_variable(self.value)
+        return (var.value, var.type)
 
 class Boolean(ASTRoot):
     def __init__(self, value):
         self.kind = ASTNodeKind.ast_bool
+        self.type = LiteralType.type_bool
 
         if value == "true":
             self.value = True
@@ -106,18 +115,19 @@ class Boolean(ASTRoot):
         return f"{self.value}"
 
     def evaluate(self, context):
-        return self.value
+        return (self.value, self.type)
 
 class String(ASTRoot):
     def __init__(self, value):
         self.kind = ASTNodeKind.ast_str
+        self.type = LiteralType.type_string
         self.value = str(value)
 
     def __str__(self):
         return f'"{self.value}"'
 
     def evaluate(self, context):
-        return self.value
+        return (self.value, self.type)
 
 class Operator(ASTRoot):
     def __init__(self, op):
@@ -142,7 +152,15 @@ class VariableDeclaration(ASTRoot):
     
     def evaluate(self, context):
         # TODO: Should check if evaluated value is the correct type
-        context.set_new_variable(self.name, self.value.evaluate(context))
+        if self.type == TokenKind.tok_key_i32:
+            self.type = LiteralType.type_i32
+        if self.type == TokenKind.tok_key_bool:
+            self.type = LiteralType.type_bool
+        if self.type == TokenKind.tok_key_string:
+            self.type = LiteralType.type_string
+
+        var = self.value.evaluate(context)
+        context.set_new_variable(self.name, var[1], var[0])
 
 class VariableAssignment(ASTRoot):
     def __init__(self, name, value):
@@ -154,7 +172,8 @@ class VariableAssignment(ASTRoot):
         return f"(Name: {self.name}, Value: {self.value})"
 
     def evaluate(self, context):
-        context.set_existing_variable(self.name, self.value.evaluate(context))
+        var = self.value.evaluate(context)
+        context.set_new_variable(self.name, var[1], var[0])
 
 class UnaryExpr(ASTRoot):
     def __init__(self, op, stmt):
@@ -185,36 +204,48 @@ class BinaryExpr(ASTRoot):
         return f"(lhs: {self.lhs}, op: {self.op}, rhs: {self.rhs})"
     
     def evaluate(self, context):
-        lhs = self.lhs.evaluate(context)
-        rhs = self.rhs.evaluate(context)
+        lhs, lhs_type = self.lhs.evaluate(context)
+        rhs, rhs_type = self.rhs.evaluate(context)
         op = self.op.evaluate(context)
 
+        if lhs_type == LiteralType.type_i32 and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
+            raise Exception(f"Incompatible types ({lhs_type} - {rhs_type})")
+
+        if lhs_type == LiteralType.type_float and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
+            raise Exception(f"Incompatible types ({lhs_type} - {rhs_type})")
+
+        if lhs_type == LiteralType.type_string and rhs_type != LiteralType.type_string:
+            raise Exception(f"Incompatible types ({lhs_type} - {rhs_type})")
+
+        if lhs_type == LiteralType.type_bool and rhs_type != LiteralType.type_bool:
+            raise Exception(f"Incompatible types ({lhs_type} - {rhs_type})")
+
         if op == '+':
-            return lhs + rhs
+            return lhs + rhs, lhs_type
         elif op == '-':
-            return lhs - rhs
+            return lhs - rhs, lhs_type
         elif op == '*':
-            return lhs * rhs
+            return lhs * rhs, lhs_type
         elif op == '/':
-            return lhs / rhs
+            return lhs / rhs, lhs_type
         elif op == '%':
-            return lhs % rhs
+            return lhs % rhs, lhs_type
         elif op == '==':
-            return lhs == rhs
+            return lhs == rhs, lhs_type
         elif op == '!=':
-            return lhs != rhs
+            return lhs != rhs, lhs_type
         elif op == '<':
-            return lhs < rhs
+            return lhs < rhs, lhs_type
         elif op == '<=':
-            return lhs <= rhs
+            return lhs <= rhs, lhs_type
         elif op == '>':
-            return lhs > rhs
+            return lhs > rhs, lhs_type
         elif op == '>=':
-            return lhs >= rhs
+            return lhs >= rhs, lhs_type
         elif op == '&&':
-            return lhs and rhs
+            return lhs and rhs, lhs_type
         elif op == '||':
-            return lhs or rhs
+            return lhs or rhs, lhs_type
         else:
             print(f"Unknown Operator ({self.op.value})")
 
@@ -247,6 +278,6 @@ class EchoBuiltin(ASTRoot):
         return f"(Value: {self.value})"
     
     def evaluate(self, context):
-        print(self.value.evaluate(context))
+        print(self.value.evaluate(context)[0])
 
  # type: ignore

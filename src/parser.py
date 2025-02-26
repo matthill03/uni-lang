@@ -36,7 +36,7 @@ class Parser:
         self.advance_with_expected([tokens.TokenKind.tok_id])
         self.advance_with_expected([tokens.TokenKind.tok_colon])
 
-        var_type = self.peek().value # type
+        var_type = self.peek().kind # type
         self.advance_with_expected(tokens.TYPES)
         self.advance_with_expected([tokens.TokenKind.tok_assign])
 
@@ -58,7 +58,7 @@ class Parser:
 
     def parse_primary(self):
         if self.peek().kind == tokens.TokenKind.tok_int:
-            num = ast.Number(self.peek().value, ast.LiteralType.type_int)
+            num = ast.Number(self.peek().value, ast.LiteralType.type_i32)
             self.advance()
             return num
 
@@ -106,7 +106,7 @@ class Parser:
             param = self.parse_bin_expr()
 
             self.advance_with_expected([tokens.TokenKind.tok_close_paren])  # )
-            self.advance_with_expected([tokens.TokenKind.tok_semi])
+            # self.advance_with_expected([tokens.TokenKind.tok_semi])
 
             echo_node = ast.EchoBuiltin(param)
             return echo_node
@@ -155,11 +155,11 @@ def parse(token_array):
             root.append_child(var_assign)
         else:
             expr = parser.parse_bin_expr()
-
+            parser.advance_with_expected([tokens.TokenKind.tok_semi])
+ #
             if expr == None:
                 break
 
-            # parser.advance_with_expected([tokens.TokenKind.tok_semi])
 
             # print(expr)
             root.append_child(expr)

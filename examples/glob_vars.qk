@@ -3,8 +3,8 @@ number_two: i32 = 10;
 result_num: i32 = number_one + number_two;
 echo(result_num);
 
-result_num = result_num + number_one;
-echo(result_num);
+result_num_two = result_num + number_one;
+echo(result_num_two);
 
 bool_one: bool = true;
 bool_two: bool = false;
