@@ -159,8 +159,11 @@ class VariableDeclaration(ASTRoot):
         if self.type == TokenKind.tok_key_string:
             self.type = LiteralType.type_string
 
-        var = self.value.evaluate(context)
-        context.set_new_variable(self.name, var[1], var[0])
+        var, var_type = self.value.evaluate(context)
+
+        if var_type != self.type:
+            raise Exception(f"Cannot assign type ({var_type}) to type ({self.type})")
+        context.set_new_variable(self.name, var_type, var)
 
 class VariableAssignment(ASTRoot):
     def __init__(self, name, value):
@@ -173,7 +176,12 @@ class VariableAssignment(ASTRoot):
 
     def evaluate(self, context):
         var = self.value.evaluate(context)
-        context.set_new_variable(self.name, var[1], var[0])
+        var_type = context.get_variable(self.name).type
+
+        if var[1] != var_type:
+            raise Exception(f"Cannot assign type ({var[1]}) to type ({var_type})")
+
+        context.set_existing_variable(self.name, var[0])
 
 class UnaryExpr(ASTRoot):
     def __init__(self, op, stmt):
@@ -185,11 +193,11 @@ class UnaryExpr(ASTRoot):
         return f"(op: {self.op}, stmt: {self.stmt})"
 
     def evaluate(self, context):
-        operand = self.stmt.evaluate(context)
+        operand, operand_type = self.stmt.evaluate(context)
         op = self.op.evaluate(context)
 
         if op == '!':
-            return not operand
+            return (not operand, LiteralType.type_bool)
         else:
             print(f"Unknown unary operator ({op})")
 
@@ -231,44 +239,23 @@ class BinaryExpr(ASTRoot):
         elif op == '%':
             return lhs % rhs, lhs_type
         elif op == '==':
-            return lhs == rhs, lhs_type
+            return lhs == rhs, LiteralType.type_bool
         elif op == '!=':
-            return lhs != rhs, lhs_type
+            return lhs != rhs, LiteralType.type_bool
         elif op == '<':
-            return lhs < rhs, lhs_type
+            return lhs < rhs, LiteralType.type_bool
         elif op == '<=':
-            return lhs <= rhs, lhs_type
+            return lhs <= rhs, LiteralType.type_bool
         elif op == '>':
-            return lhs > rhs, lhs_type
+            return lhs > rhs, LiteralType.type_bool
         elif op == '>=':
-            return lhs >= rhs, lhs_type
+            return lhs >= rhs, LiteralType.type_bool
         elif op == '&&':
-            return lhs and rhs, lhs_type
+            return lhs and rhs, LiteralType.type_bool
         elif op == '||':
-            return lhs or rhs, lhs_type
+            return lhs or rhs, LiteralType.type_bool
         else:
             print(f"Unknown Operator ({self.op.value})")
-
-PRECEDENCE = {
-    # Maths
-    TokenKind.tok_star: 6,
-    TokenKind.tok_fslash: 6,
-    TokenKind.tok_percent: 6,
-    TokenKind.tok_dash: 5,
-    TokenKind.tok_plus: 5,
-
-    # Comparison
-    TokenKind.tok_lt: 4,
-    TokenKind.tok_lt_equal: 4,
-    TokenKind.tok_gt: 4,
-    TokenKind.tok_gt_equal: 4,
-    TokenKind.tok_equal: 3,
-    TokenKind.tok_not_equal: 3,
-
-    # Logical
-    TokenKind.tok_and_op: 2,
-    TokenKind.tok_or_op: 1,
-}
 
 class EchoBuiltin(ASTRoot):
     def __init__(self, value):
