@@ -5,6 +5,7 @@ RESERVED_WORDS = {
     "false": TokenKind.tok_false,
     "echo": TokenKind.tok_echo,
     "i32": TokenKind.tok_key_i32,
+    "f32": TokenKind.tok_key_f32,
     "string": TokenKind.tok_key_string,
     "bool": TokenKind.tok_key_bool
 }

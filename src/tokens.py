@@ -23,6 +23,7 @@ class TokenKind(Enum):
 
     # Types
     tok_key_i32 = 28,
+    tok_key_f32 = 33,
     tok_key_bool = 29,
     tok_key_string = 30,
 
@@ -73,6 +74,7 @@ class OperatorType(Enum):
     type_maths = 1,
     type_string = 2,
     type_comp = 3,
+
 class Token:
     def __init__(self, kind, value, line, column):
         self.kind = kind

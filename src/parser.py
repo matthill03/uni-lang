@@ -23,6 +23,7 @@ PRECEDENCE = {
     TokenKind.tok_or_op: 1,
 }
 
+
 class ParseError(RuntimeError):
     def __init__(self, token, message):
         super().__init__(message)
@@ -63,7 +64,7 @@ class Parser:
         self.advance_with_expected(TokenKind.tok_colon)
 
         var_type = self.peek().kind # type
-        self.advance_with_expected(TokenKind.tok_key_i32, TokenKind.tok_key_bool, TokenKind.tok_key_string)
+        self.advance_with_expected(TokenKind.tok_key_i32, TokenKind.tok_key_f32, TokenKind.tok_key_bool, TokenKind.tok_key_string)
         self.advance_with_expected(TokenKind.tok_assign)
 
         var_value = self.parse_bin_expr() # value
@@ -83,49 +84,40 @@ class Parser:
         return VariableAssignment(var_name, var_value)
 
     def parse_primary(self):
-        if self.peek().kind == TokenKind.tok_int:
-            num = Number(self.peek().value, LiteralType.type_i32)
-            self.advance()
-            return num
+        token = self.peek()
 
-        if self.peek().kind == TokenKind.tok_float:
-            num = Number(self.peek().value, LiteralType.type_float)
-            self.advance()
-            return num
+        LITERAL_MAP = {
+            TokenKind.tok_int: lambda: Number(token.value, LiteralType.type_i32),
+            TokenKind.tok_float: lambda: Number(token.value, LiteralType.type_f32),
+            TokenKind.tok_string: lambda: String(token.value),
+            TokenKind.tok_true: lambda: Boolean(token.value),
+            TokenKind.tok_false: lambda: Boolean(token.value),
+            TokenKind.tok_id: lambda: Identifier(token.value),
+        }
 
-        if self.peek().kind == TokenKind.tok_string:
-            num = String(self.peek().value)
+        if token.kind in LITERAL_MAP:
             self.advance()
-            return num
+            return LITERAL_MAP[token.kind]()
 
-        if self.peek().kind == TokenKind.tok_true:
-            bol = Boolean(self.peek().value)
-            self.advance()
-            return bol
-
-        if self.peek().kind == TokenKind.tok_false:
-            bol = Boolean(self.peek().value)
-            self.advance()
-            return bol
-
-        if self.peek().kind == TokenKind.tok_id:
-            iden = Identifier(self.peek().value)
-            self.advance()
-            return iden
-
-        if self.peek().kind == TokenKind.tok_not_op:
+        if token.kind == TokenKind.tok_not_op:
             op = self.parse_operator()
             self.advance() # !
             operand = self.parse_primary()
             return UnaryExpr(op, operand)
 
-        if self.peek().kind == TokenKind.tok_open_paren:
+        if token.kind == TokenKind.tok_dash:
+            op = self.parse_operator()
+            self.advance() # -
+            operand = self.parse_primary()
+            return UnaryExpr(op, operand)
+
+        if token.kind == TokenKind.tok_open_paren:
             self.advance()  # (
             expr = self.parse_bin_expr()
             self.advance_with_expected(TokenKind.tok_close_paren)  # )
             return expr
 
-        if self.peek().kind == TokenKind.tok_echo:
+        if token.kind == TokenKind.tok_echo:
             # echo(expr)
             self.advance() # echo
             self.advance_with_expected(TokenKind.tok_open_paren)  # (
@@ -137,7 +129,7 @@ class Parser:
             echo_node = EchoBuiltin(param)
             return echo_node
 
-        raise ValueError(f"Unexpected token ({self.peek().kind})")
+        raise ParseError(token, f"Unexpected token ({token.kind})")
 
     def parse_bin_expr(self, min_precedence=0):
         if self.peek().kind == TokenKind.tok_semi:

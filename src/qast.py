@@ -42,7 +42,7 @@ class ASTContext:
 
 class LiteralType(Enum):
     type_i32 = 0,
-    type_float = 1,
+    type_f32 = 1,
     type_string = 2,
     type_bool = 3,
 
@@ -81,7 +81,7 @@ class Number(ASTRoot):
         self.kind = ASTNodeKind.ast_num
         self.type = type
 
-        if type == LiteralType.type_float:
+        if type == LiteralType.type_f32:
             self.value = float(value)
         elif type == LiteralType.type_i32:
             self.value = int(value)
@@ -179,17 +179,21 @@ class VariableDeclaration(ASTRoot):
         self.type = type
         self.value = value
 
+        self.TOKEN_TO_LITERAL_TYPE = {
+            TokenKind.tok_key_i32: LiteralType.type_i32,
+            TokenKind.tok_key_f32: LiteralType.type_f32,
+            TokenKind.tok_key_string: LiteralType.type_string,
+            TokenKind.tok_key_bool: LiteralType.type_bool,
+        }
+
     def __str__(self):
         return f"(Name: {self.name}, Type: {self.type}, Value: {self.value})"
 
     def evaluate(self, context):
-        # TODO: Should check if evaluated value is the correct type
-        if self.type == TokenKind.tok_key_i32:
-            self.type = LiteralType.type_i32
-        if self.type == TokenKind.tok_key_bool:
-            self.type = LiteralType.type_bool
-        if self.type == TokenKind.tok_key_string:
-            self.type = LiteralType.type_string
+        if self.type in self.TOKEN_TO_LITERAL_TYPE:
+            self.type = self.TOKEN_TO_LITERAL_TYPE[self.type]
+        else:
+            raise QwrkRuntimeError(self, f"Type ({self.type}) not a supported type")
 
         var, var_type = self.value.evaluate(context)
         if var_type != self.type:
@@ -230,8 +234,13 @@ class UnaryExpr(ASTRoot):
 
         if op == '!':
             return (not operand, LiteralType.type_bool)
+        if op == '-':
+            if operand_type != LiteralType.type_f32 and operand_type != LiteralType.type_i32:
+                raise QwrkRuntimeError(self, f"Invalid operand for '-' ({operand} -> {operand_type})") 
+
+            return (-operand, operand_type)
         else:
-            print(f"Unknown unary operator ({op})")
+            raise QwrkRuntimeError(self, f"Unknown unary operator ({op})")
 
 class BinaryExpr(ASTRoot):
     def __init__(self, lhs, op, rhs):
@@ -247,10 +256,10 @@ class BinaryExpr(ASTRoot):
         lhs, lhs_type = self.lhs.evaluate(context)
         rhs, rhs_type = self.rhs.evaluate(context)
 
-        if lhs_type != LiteralType.type_i32 and lhs_type != LiteralType.type_float:
+        if lhs_type != LiteralType.type_i32 and lhs_type != LiteralType.type_f32:
             raise QwrkRuntimeError(self, f"Invalid Arethmatic operation type ({lhs_type})")
 
-        if rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float:
+        if rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_f32:
             raise QwrkRuntimeError(self, f"Invalid Arethmatic operation type ({rhs_type})")
 
         if op == '+':
@@ -280,10 +289,10 @@ class BinaryExpr(ASTRoot):
         lhs, lhs_type = self.lhs.evaluate(context)
         rhs, rhs_type = self.rhs.evaluate(context)
 
-        if lhs_type == LiteralType.type_i32 and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
+        if lhs_type == LiteralType.type_i32 and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_f32):
             raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
 
-        if lhs_type == LiteralType.type_float and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
+        if lhs_type == LiteralType.type_f32 and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_f32):
             raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
 
         if lhs_type == LiteralType.type_bool and rhs_type != LiteralType.type_bool:
@@ -313,8 +322,7 @@ class BinaryExpr(ASTRoot):
             raise QwrkRuntimeError(self, f"Invalid String operation type ({rhs_type})")
 
         if op == '++':
-            return lhs + rhs, lhs_type
-
+            return lhs + rhs, LiteralType.type_string
 
     def evaluate(self, context):
         if self.op.is_mathmatical():

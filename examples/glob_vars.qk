@@ -1,4 +1,4 @@
-number_one: i32 = 10;
+number_one: i32 = -10;
 number_two: i32 = 10;
 result_num: i32 = number_one + number_two;
 echo(result_num);
