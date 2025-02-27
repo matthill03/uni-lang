@@ -22,6 +22,11 @@ PRECEDENCE = {
     TokenKind.tok_or_op: 1,
 }
 
+class ParseError(RuntimeError):
+    def __init__(self, token, message):
+        super().__init__(message)
+        self.token = token
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -42,8 +47,7 @@ class Parser:
 
     def advance_with_expected(self, *expected_kinds):
         if self.peek().kind not in expected_kinds:
-            print(f"Unexpected token ({self.peek().kind}), wanted -> {expected_kinds}")
-            exit(1)
+            raise ParseError(self.peek(), f"Unexpected token ({self.peek().kind}), wanted -> {expected_kinds}")
 
         self.advance()
 
