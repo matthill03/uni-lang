@@ -8,12 +8,18 @@ echo(result_num);
 
 bool_one: bool = true;
 bool_two: bool = false;
+bool_three: bool = 4 >= 9;
 result_bool: bool = bool_one || bool_two;
 
 echo(result_bool);
+echo(bool_three);
 
 string_one: string = "hello ";
 string_two: string = "world";
-result_string: string = string_one + string_two;
+result_string: string = string_one ++ string_two;
 
 echo(result_string);
+
+error_test: i32 = 5;
+error_test = error_test + "Hello there";
+echo(error_test);

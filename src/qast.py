@@ -1,17 +1,17 @@
 from enum import Enum
-from tokens import TokenKind
+from tokens import TokenKind, OperatorType
 
 class QwrkRuntimeError(RuntimeError):
     def __init__(self, node, message):
         super().__init__(message)
         self.node = node
         self.message = message
-    
+
     def __str__(self):
         return self.message
 
     def __repr__(self):
-        super().__repr__()
+        return self.message
 
 class SymbolTableEntry:
     def __init__(self, type, value):
@@ -21,17 +21,17 @@ class SymbolTableEntry:
 class ASTContext:
     def __init__(self):
         self.variables = {}
-    
+
     def get_variable(self, var_name):
         if var_name not in self.variables:
             raise QwrkRuntimeError(self, f"Undefined variable ({var_name})")
-        
+
         return self.variables[var_name]
 
     def set_new_variable(self, var_name, type, value):
         if var_name in self.variables:
             raise QwrkRuntimeError(self, f"Variable name already exists ({var_name})")
-        
+
         self.variables[var_name] = SymbolTableEntry(type, value)
 
     def set_existing_variable(self, var_name, value):
@@ -68,9 +68,6 @@ class ASTRoot():
         self.kind = ASTNodeKind.ast_root
         self.children = []
         self.context = ASTContext()
-    
-    def __str__(self):
-        pass
 
     def evaluate(self):
         for child in self.children:
@@ -96,15 +93,15 @@ class Number(ASTRoot):
 
     def evaluate(self, context):
         return (self.value, self.type)
-    
+
 class Identifier(ASTRoot):
     def __init__(self, value):
         self.kind = ASTNodeKind.ast_id
         self.value = value
-    
+
     def __str__(self):
         return f"(Value: {self.value})"
-    
+
     def evaluate(self, context):
         var = context.get_variable(self.value)
         return (var.value, var.type)
@@ -140,8 +137,9 @@ class String(ASTRoot):
         return (self.value, self.type)
 
 class Operator(ASTRoot):
-    def __init__(self, op):
+    def __init__(self, op, type):
         self.kind = ASTNodeKind.ast_op
+        self.type = type
         self.value = op
 
     def __str__(self):
@@ -149,17 +147,41 @@ class Operator(ASTRoot):
 
     def evaluate(self, context):
         return self.value
-    
+
+    def is_mathmatical(self):
+        if self.type == OperatorType.type_maths:
+            return True
+
+        return False
+
+    def is_logical(self):
+        if self.type == OperatorType.type_logical:
+            return True
+
+        return False
+
+    def is_comp(self):
+        if self.type == OperatorType.type_comp:
+            return True
+
+        return False
+
+    def is_string_op(self):
+        if self.type == OperatorType.type_string:
+            return True
+
+        return False
+
 class VariableDeclaration(ASTRoot):
     def __init__(self, name, type, value):
         self.kind = ASTNodeKind.ast_var_decl
         self.name = name
         self.type = type
         self.value = value
-    
+
     def __str__(self):
         return f"(Name: {self.name}, Type: {self.type}, Value: {self.value})"
-    
+
     def evaluate(self, context):
         # TODO: Should check if evaluated value is the correct type
         if self.type == TokenKind.tok_key_i32:
@@ -172,7 +194,7 @@ class VariableDeclaration(ASTRoot):
         var, var_type = self.value.evaluate(context)
         if var_type != self.type:
             raise QwrkRuntimeError(self, f"Cannot assign type ({var_type}) to type ({self.type})")
-        
+
         context.set_new_variable(self.name, var_type, var)
 
 class VariableAssignment(ASTRoot):
@@ -220,23 +242,16 @@ class BinaryExpr(ASTRoot):
 
     def __str__(self):
         return f"(lhs: {self.lhs}, op: {self.op}, rhs: {self.rhs})"
-    
-    def evaluate(self, context):
+
+    def evaluate_arithmatic(self, op, context):
         lhs, lhs_type = self.lhs.evaluate(context)
         rhs, rhs_type = self.rhs.evaluate(context)
-        op = self.op.evaluate(context)
 
-        if lhs_type == LiteralType.type_i32 and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
-            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
+        if lhs_type != LiteralType.type_i32 and lhs_type != LiteralType.type_float:
+            raise QwrkRuntimeError(self, f"Invalid Arethmatic operation type ({lhs_type})")
 
-        if lhs_type == LiteralType.type_float and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
-            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
-
-        if lhs_type == LiteralType.type_string and rhs_type != LiteralType.type_string:
-            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
-
-        if lhs_type == LiteralType.type_bool and rhs_type != LiteralType.type_bool:
-            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
+        if rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float:
+            raise QwrkRuntimeError(self, f"Invalid Arethmatic operation type ({rhs_type})")
 
         if op == '+':
             return lhs + rhs, lhs_type
@@ -248,7 +263,33 @@ class BinaryExpr(ASTRoot):
             return lhs / rhs, lhs_type
         elif op == '%':
             return lhs % rhs, lhs_type
-        elif op == '==':
+
+    def evaluate_logical(self, op, context):
+        lhs, lhs_type = self.lhs.evaluate(context)
+        rhs, rhs_type = self.rhs.evaluate(context)
+
+        if lhs_type == LiteralType.type_bool and rhs_type != LiteralType.type_bool:
+            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
+
+        elif op == '&&':
+            return lhs and rhs, LiteralType.type_bool
+        elif op == '||':
+            return lhs or rhs, LiteralType.type_bool
+
+    def evaluate_comp(self, op, context):
+        lhs, lhs_type = self.lhs.evaluate(context)
+        rhs, rhs_type = self.rhs.evaluate(context)
+
+        if lhs_type == LiteralType.type_i32 and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
+            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
+
+        if lhs_type == LiteralType.type_float and (rhs_type != LiteralType.type_i32 and rhs_type != LiteralType.type_float):
+            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
+
+        if lhs_type == LiteralType.type_bool and rhs_type != LiteralType.type_bool:
+            raise QwrkRuntimeError(self, f"Incompatible types ({lhs_type} - {rhs_type})")
+
+        if op == '==':
             return lhs == rhs, LiteralType.type_bool
         elif op == '!=':
             return lhs != rhs, LiteralType.type_bool
@@ -260,12 +301,35 @@ class BinaryExpr(ASTRoot):
             return lhs > rhs, LiteralType.type_bool
         elif op == '>=':
             return lhs >= rhs, LiteralType.type_bool
-        elif op == '&&':
-            return lhs and rhs, LiteralType.type_bool
-        elif op == '||':
-            return lhs or rhs, LiteralType.type_bool
-        else:
-            print(f"Unknown Operator ({self.op.value})")
+
+    def evaluate_string(self, op, context):
+        lhs, lhs_type = self.lhs.evaluate(context)
+        rhs, rhs_type = self.rhs.evaluate(context)
+
+        if lhs_type != LiteralType.type_string:
+            raise QwrkRuntimeError(self, f"Invalid String operation type ({lhs_type})")
+
+        if rhs_type != LiteralType.type_string:
+            raise QwrkRuntimeError(self, f"Invalid String operation type ({rhs_type})")
+
+        if op == '++':
+            return lhs + rhs, lhs_type
+
+
+    def evaluate(self, context):
+        if self.op.is_mathmatical():
+            return self.evaluate_arithmatic(self.op.evaluate(context), context)
+
+        if self.op.is_logical():
+            return self.evaluate_logical(self.op.evaluate(context), context)
+
+        if self.op.is_comp():
+            return self.evaluate_comp(self.op.evaluate(context), context)
+
+        if self.op.is_string_op():
+            return self.evaluate_string(self.op.evaluate(context), context)
+
+        raise QwrkRuntimeError(self, f"Unknown Operator ({self.op.value})")
 
 class EchoBuiltin(ASTRoot):
     def __init__(self, value):

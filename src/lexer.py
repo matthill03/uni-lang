@@ -1,5 +1,14 @@
 from tokens import TokenKind, Token
 
+RESERVED_WORDS = {
+    "true": TokenKind.tok_true,
+    "false": TokenKind.tok_false,
+    "echo": TokenKind.tok_echo,
+    "i32": TokenKind.tok_key_i32,
+    "string": TokenKind.tok_key_string,
+    "bool": TokenKind.tok_key_bool
+}
+
 class Lexer:
     def __init__(self, src):
         self.src = src
@@ -27,26 +36,19 @@ class Lexer:
             self.advance()
 
     def handle_word(self, value):
-        if value == "true":
-            return Token(TokenKind.tok_true, value, self.line, self.column)
-        elif value == "false":
-            return Token(TokenKind.tok_false, value, self.line, self.column)
-        elif value == "i32":
-            return Token(TokenKind.tok_key_i32, value, self.line, self.column)
-        elif value == "bool":
-            return Token(TokenKind.tok_key_bool, value, self.line, self.column)
-        elif value == "string":
-            return Token(TokenKind.tok_key_string, value, self.line, self.column)
-        elif value == "echo":
-            return Token(TokenKind.tok_echo, value, self.line, self.column)
-        else:
-            return Token(TokenKind.tok_id, value, self.line, self.column)
+        kind = RESERVED_WORDS.get(value, TokenKind.tok_id)
+
+        return Token(kind, value, self.line, self.column)
 
     def handle_delimiter(self, value):
         if value == '/':
             self.advance()
             return Token(TokenKind.tok_fslash, '/', self.line, self.column)
         elif value == '+':
+            if self.peek_offset(1) == '+':
+                self.advance_n(2)
+                return Token(TokenKind.tok_concat, "++", self.line, self.column)
+
             self.advance()
             return Token(TokenKind.tok_plus, '+', self.line, self.column)
         elif value == '-':

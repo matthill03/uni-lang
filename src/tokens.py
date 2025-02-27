@@ -34,6 +34,9 @@ class TokenKind(Enum):
     tok_fslash = 10,
     tok_percent = 11,
 
+    # String Manipulation
+    tok_concat = 32,
+
     # Comparison
     tok_and_op = 12,
     tok_bit_and_op = 13,
@@ -59,10 +62,17 @@ class TokenKind(Enum):
 BINARY_0PERATORS = [TokenKind.tok_plus, TokenKind.tok_dash, TokenKind.tok_fslash, TokenKind.tok_percent, TokenKind.tok_star]
 COMP_0PERATORS = [TokenKind.tok_gt, TokenKind.tok_lt, TokenKind.tok_equal, TokenKind.tok_not_equal, TokenKind.tok_gt_equal, TokenKind.tok_lt_equal]
 LOGIGAL_OPERATORS = [TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_not_op]
+STRING_OPERATORS = [TokenKind.tok_concat]
 
-OPERATORS = [TokenKind.tok_plus, TokenKind.tok_dash, TokenKind.tok_fslash, TokenKind.tok_percent, TokenKind.tok_star, TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_not_op, TokenKind.tok_gt, TokenKind.tok_lt, TokenKind.tok_equal, TokenKind.tok_not_equal, TokenKind.tok_gt_equal, TokenKind.tok_lt_equal]
+OPERATORS = [TokenKind.tok_plus, TokenKind.tok_dash, TokenKind.tok_fslash, TokenKind.tok_percent, TokenKind.tok_star, TokenKind.tok_and_op, TokenKind.tok_or_op, TokenKind.tok_not_op, TokenKind.tok_gt, TokenKind.tok_lt, TokenKind.tok_equal, TokenKind.tok_not_equal, TokenKind.tok_gt_equal, TokenKind.tok_lt_equal, TokenKind.tok_concat]
 
 DIGITS = [TokenKind.tok_int, TokenKind.tok_float]
+
+class OperatorType(Enum):
+    type_logical = 0,
+    type_maths = 1,
+    type_string = 2,
+    type_comp = 3,
 class Token:
     def __init__(self, kind, value, line, column):
         self.kind = kind
@@ -77,8 +87,18 @@ class Token:
     def is_operator(self):
         if self.kind in OPERATORS:
             return True
-        
+
         return False
+
+    def op_type(self):
+        if self.kind in LOGIGAL_OPERATORS:
+            return OperatorType.type_logical
+        elif self.kind in BINARY_0PERATORS:
+            return OperatorType.type_maths
+        elif self.kind in STRING_OPERATORS:
+            return OperatorType.type_string
+        elif self.kind in COMP_0PERATORS:
+            return OperatorType.type_comp
 
     def is_binary_op(self):
         if self.kind in BINARY_0PERATORS:
@@ -89,7 +109,7 @@ class Token:
     def is_comparison_op(self):
         if self.kind in COMP_0PERATORS:
             return True
-        
+
         return False
 
     def is_logical_op(self):
@@ -101,7 +121,7 @@ class Token:
     def is_digit(self):
         if self.kind in DIGITS:
             return True
-        
+
         return False
 
 

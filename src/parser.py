@@ -8,6 +8,7 @@ PRECEDENCE = {
     TokenKind.tok_percent: 6,
     TokenKind.tok_dash: 5,
     TokenKind.tok_plus: 5,
+    TokenKind.tok_concat: 5,
 
     # Comparison
     TokenKind.tok_lt: 4,
@@ -53,7 +54,7 @@ class Parser:
 
     def parse_operator(self):
         if self.peek().is_operator():
-            return Operator(self.peek().value)
+            return Operator(self.peek().value, self.peek().op_type())
 
     def parse_variable_declaration(self):
         # identifier: type = value;
