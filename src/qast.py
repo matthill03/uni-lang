@@ -60,6 +60,8 @@ class ASTNodeKind(Enum):
     # Expressions/Statements
     ast_var_decl = 4,
     ast_var_assign = 8,
+    ast_if_stmt = 9,
+    ast_while_stmt = 10,
     ast_unr_expr = 5,
     ast_bin_expr = 6,
 
@@ -218,6 +220,32 @@ class VariableAssignment(ASTRoot):
             raise QwrkRuntimeError(self, f"Cannot assign type ({var[1]}) to type ({var_type})")
 
         context.set_existing_variable(self.name, var[0])
+
+class IfStmt(ASTRoot):
+    def __init__(self, condition, body):
+        self.kind = ASTNodeKind.ast_if_stmt
+        self.condition = condition
+        self.body = body
+
+    def __str__(self):
+        pass
+
+    def evaluate(self):
+        if self.condition.evaluate() == True:
+            self.body.evaluate()
+
+class WhileStmt(ASTRoot):
+    def __init__(self, condition, body):
+        self.kind = ASTNodeKind.ast_while_stmt
+        self.condition = condition
+        self.body = body
+
+    def __str__(self):
+        pass
+
+    def evaluate(self):
+        while self.condition.evaluate() != True:
+            self.body.evaluate()
 
 class UnaryExpr(ASTRoot):
     def __init__(self, op, stmt):

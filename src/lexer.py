@@ -3,6 +3,8 @@ from tokens import TokenKind, Token
 RESERVED_WORDS = {
     "true": TokenKind.tok_true,
     "false": TokenKind.tok_false,
+    "while": TokenKind.tok_while,
+    "if": TokenKind.tok_if,
     "echo": TokenKind.tok_echo,
     "i32": TokenKind.tok_key_i32,
     "f32": TokenKind.tok_key_f32,
@@ -63,10 +65,16 @@ class Lexer:
             return Token(TokenKind.tok_percent, '%', self.line, self.column)
         elif value == '(':
             self.advance()
-            return Token(TokenKind.tok_open_paren, ')', self.line, self.column)
+            return Token(TokenKind.tok_open_paren, '(', self.line, self.column)
         elif value == ')':
             self.advance()
             return Token(TokenKind.tok_close_paren, ')', self.line, self.column)
+        elif value == '{':
+            self.advance()
+            return Token(TokenKind.tok_open_brace, '{', self.line, self.column)
+        elif value == '}':
+            self.advance()
+            return Token(TokenKind.tok_close_brace, '}', self.line, self.column)
         elif value == ';':
             self.advance()
             return Token(TokenKind.tok_semi, ';', self.line, self.column)

@@ -1,5 +1,5 @@
 from tokens import TokenKind
-from qast import BinaryExpr, UnaryExpr, Number, Boolean, String, Identifier, ASTRoot, VariableAssignment, VariableDeclaration, EchoBuiltin, Operator, LiteralType
+from qast import BinaryExpr, UnaryExpr, Number, Boolean, String, Identifier, ASTRoot, VariableAssignment, VariableDeclaration, IfStmt, WhileStmt, EchoBuiltin, Operator, LiteralType
 
 PRECEDENCE = {
     # Maths
@@ -124,10 +124,62 @@ class Parser:
             param = self.parse_bin_expr()
 
             self.advance_with_expected(TokenKind.tok_close_paren)  # )
-            # self.advance_with_expected([tokens.TokenKind.tok_semi])
+            # self.advance_with_expected(TokenKind.tok_semi)
 
             echo_node = EchoBuiltin(param)
             return echo_node
+
+        if token.kind == TokenKind.tok_if:
+            # if (expr) {
+            #     body
+            # }
+
+            self.advance() # if
+            self.advance_with_expected(TokenKind.tok_open_paren)  # (
+            condition = self.parse_bin_expr()
+
+            self.advance_with_expected(TokenKind.tok_close_paren)  # )
+            self.advance_with_expected(TokenKind.tok_open_brace)  # {
+
+            body_tokens = []
+            while self.peek().kind != TokenKind.tok_close_brace:
+                body_tokens.append(self.peek())
+                self.advance()
+
+            body = parse(body_tokens)
+            print(body)
+
+            self.advance_with_expected(TokenKind.tok_close_brace)  # {
+
+            
+            if_node = IfStmt(condition, body)
+            return if_node
+            
+        if token.kind == TokenKind.tok_while:
+            # while (expr) {
+            #     body
+            # }
+
+            self.advance() # while
+            self.advance_with_expected(TokenKind.tok_open_paren)  # (
+            condition = self.parse_bin_expr()
+
+            self.advance_with_expected(TokenKind.tok_close_paren)  # )
+            self.advance_with_expected(TokenKind.tok_open_brace)  # {
+
+            body_tokens = []
+            while self.peek().kind != TokenKind.tok_close_brace:
+                body_tokens.append(self.peek())
+                self.advance()
+
+            body = parse(body_tokens)
+            print(body)
+
+            self.advance_with_expected(TokenKind.tok_close_brace)  # {
+
+            
+            while_node = WhileStmt(condition, body)
+            return while_node
 
         raise ParseError(token, f"Unexpected token ({token.kind})")
 
@@ -156,7 +208,6 @@ def parse(token_array):
     root = ASTRoot()
 
     while parser.position < len(parser.tokens):
-
         if parser.peek().kind == TokenKind.tok_id and parser.peek_offset(1).kind == TokenKind.tok_colon:
             var_decl = parser.parse_variable_declaration()
             if var_decl == None:
@@ -169,10 +220,11 @@ def parse(token_array):
             if var_assign == None:
                 break
 
-            # print(var_decl)
+            # print(var_assign)
             root.append_child(var_assign)
         else:
             expr = parser.parse_bin_expr()
+            print(token_array)
             parser.advance_with_expected(TokenKind.tok_semi)
             if expr == None:
                 break
@@ -180,4 +232,4 @@ def parse(token_array):
             # print(expr)
             root.append_child(expr)
 
-    root.evaluate()
+    return root

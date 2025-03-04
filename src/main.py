@@ -11,7 +11,8 @@ def get_file_content(file_path):
 
 def process(src):
     tokens = lex(src)
-    _ = parse(tokens)
+    ast_root = parse(tokens)
+    ast_root.evaluate()
 
 def run_file(file_path):
     src = get_file_content(file_path)

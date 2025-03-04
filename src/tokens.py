@@ -10,6 +10,8 @@ class TokenKind(Enum):
     # Delimiters
     tok_open_paren = 2,
     tok_close_paren = 3,
+    tok_open_brace = 36,
+    tok_close_brace = 37,
     tok_semi = 4,
     tok_colon = 31,
 
@@ -17,6 +19,8 @@ class TokenKind(Enum):
     # Reserved Words
     tok_true = 5,
     tok_false = 6,
+    tok_if = 34,
+    tok_while = 35,
 
     # Builtin
     tok_echo = 27,
