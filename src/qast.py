@@ -69,11 +69,10 @@ class ASTRoot():
     def __init__(self):
         self.kind = ASTNodeKind.ast_root
         self.children = []
-        self.context = ASTContext()
 
-    def evaluate(self):
+    def evaluate(self, context):
         for child in self.children:
-            child.evaluate(self.context)
+            child.evaluate(context)
 
     def append_child(self, child):
         self.children.append(child)
@@ -230,9 +229,9 @@ class IfStmt(ASTRoot):
     def __str__(self):
         pass
 
-    def evaluate(self):
-        if self.condition.evaluate() == True:
-            self.body.evaluate()
+    def evaluate(self, context):
+        if self.condition.evaluate(context)[0] == True:
+            self.body.evaluate(context)
 
 class WhileStmt(ASTRoot):
     def __init__(self, condition, body):
@@ -243,9 +242,9 @@ class WhileStmt(ASTRoot):
     def __str__(self):
         pass
 
-    def evaluate(self):
-        while self.condition.evaluate() != True:
-            self.body.evaluate()
+    def evaluate(self, context):
+        while self.condition.evaluate(context)[0] == True:
+            self.body.evaluate(context)
 
 class UnaryExpr(ASTRoot):
     def __init__(self, op, stmt):

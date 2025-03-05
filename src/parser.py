@@ -146,15 +146,16 @@ class Parser:
                 body_tokens.append(self.peek())
                 self.advance()
 
-            body = parse(body_tokens)
-            print(body)
-
+            # for token in body_tokens:
+            #     print(token)
+                
             self.advance_with_expected(TokenKind.tok_close_brace)  # {
 
-            
+            body = parse(body_tokens)
+
             if_node = IfStmt(condition, body)
             return if_node
-            
+
         if token.kind == TokenKind.tok_while:
             # while (expr) {
             #     body
@@ -172,12 +173,13 @@ class Parser:
                 body_tokens.append(self.peek())
                 self.advance()
 
-            body = parse(body_tokens)
-            print(body)
-
+            # for token in body_tokens:
+            #     print(token)
+                
             self.advance_with_expected(TokenKind.tok_close_brace)  # {
 
-            
+            body = parse(body_tokens)
+
             while_node = WhileStmt(condition, body)
             return while_node
 
@@ -224,7 +226,7 @@ def parse(token_array):
             root.append_child(var_assign)
         else:
             expr = parser.parse_bin_expr()
-            print(token_array)
+            # print(parser.peek())
             parser.advance_with_expected(TokenKind.tok_semi)
             if expr == None:
                 break

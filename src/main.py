@@ -2,6 +2,7 @@ import sys
 
 from lexer import lex
 from parser import parse
+from interpreter import interpret
 
 def get_file_content(file_path):
     with open(file_path, "r") as file:
@@ -12,7 +13,7 @@ def get_file_content(file_path):
 def process(src):
     tokens = lex(src)
     ast_root = parse(tokens)
-    ast_root.evaluate()
+    interpret(ast_root)
 
 def run_file(file_path):
     src = get_file_content(file_path)

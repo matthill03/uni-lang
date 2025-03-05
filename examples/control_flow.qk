@@ -2,9 +2,9 @@ i: i32 = 0;
 
 if (i < 30) {
     echo("Wow");
-}
+};
 
 while (i < 10) {
     echo(i);
     i = i + 1; 
-}
+};
