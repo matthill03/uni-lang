@@ -83,7 +83,7 @@ class Parser:
 
         return VariableAssignment(var_name, var_value)
 
-    def parse_if_stmt(self):
+    def parse_if_stmt(self, parent_context):
         # if (expr) {
         #     body
         # }
@@ -95,9 +95,9 @@ class Parser:
         self.advance_with_expected(TokenKind.tok_close_paren)  # )
         self.advance_with_expected(TokenKind.tok_open_brace)  # {
 
-        body = ASTRoot()
+        body = ASTRoot(parent_context)
         while self.peek().kind != TokenKind.tok_close_brace:
-            stmt = self.parse_stmt()
+            stmt = self.parse_stmt(body.context)
             body.append_child(stmt)
 
         # for token in body_tokens:
@@ -109,19 +109,19 @@ class Parser:
         if self.peek().kind == TokenKind.tok_else:
             self.advance() # else
             if self.peek().kind == TokenKind.tok_if:
-                else_branch = self.parse_if_stmt()
+                else_branch = self.parse_if_stmt(parent_context)
             else:
                 self.advance_with_expected(TokenKind.tok_open_brace) # {
-                else_body = ASTRoot()
+                else_body = ASTRoot(parent_context)
                 while self.peek().kind != TokenKind.tok_close_brace:
-                    else_stmt = self.parse_stmt()
+                    else_stmt = self.parse_stmt(else_body.context)
                     else_body.append_child(else_stmt)
 
                 self.advance_with_expected(TokenKind.tok_close_brace) # }
 
         return IfStmt(condition, body, else_branch)
     
-    def parse_while_stmt(self):
+    def parse_while_stmt(self, parent_context):
         # while (expr) {
         #     body
         # }
@@ -133,9 +133,9 @@ class Parser:
         self.advance_with_expected(TokenKind.tok_close_paren)  # )
         self.advance_with_expected(TokenKind.tok_open_brace)  # {
 
-        body = ASTRoot()
+        body = ASTRoot(parent_context)
         while self.peek().kind != TokenKind.tok_close_brace:
-            stmt = self.parse_stmt()
+            stmt = self.parse_stmt(body.context)
             body.append_child(stmt)
 
         # for token in body_tokens:
@@ -213,7 +213,7 @@ class Parser:
 
         return lhs
     
-    def parse_stmt(self):
+    def parse_stmt(self, parent_context):
         if self.peek().kind == TokenKind.tok_id and self.peek_offset(1).kind == TokenKind.tok_colon:
             var_decl = self.parse_variable_declaration()
             if var_decl == None:
@@ -229,13 +229,13 @@ class Parser:
             # print(var_assign)
             return var_assign
         elif self.peek().kind == TokenKind.tok_if:
-            if_stmt =  self.parse_if_stmt()
+            if_stmt =  self.parse_if_stmt(parent_context)
             if if_stmt == None:
                 return
 
             return if_stmt
         elif self.peek().kind == TokenKind.tok_while:
-            while_stmt = self.parse_while_stmt()
+            while_stmt = self.parse_while_stmt(parent_context)
             if while_stmt == None:
                 return
                 
@@ -256,7 +256,7 @@ def parse(token_array):
     root = ASTRoot()
 
     while parser.position < len(parser.tokens):
-        stmt = parser.parse_stmt()
+        stmt = parser.parse_stmt(root.context)
 
         if stmt == None:
             break

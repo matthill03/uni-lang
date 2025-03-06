@@ -19,12 +19,16 @@ class SymbolTableEntry:
         self.value = value
 
 class ASTContext:
-    def __init__(self):
+    def __init__(self, parent=None):
+        self.parent = parent
         self.variables = {}
 
     def get_variable(self, var_name):
         if var_name not in self.variables:
-            raise QwrkRuntimeError(self, f"Undefined variable ({var_name})")
+            if self.parent is None:
+                raise QwrkRuntimeError(self, f"Undefined variable ({var_name})")
+            
+            return self.parent.get_variable(var_name)
 
         return self.variables[var_name]
 
@@ -36,9 +40,13 @@ class ASTContext:
 
     def set_existing_variable(self, var_name, value):
         if var_name not in self.variables:
-            raise QwrkRuntimeError(self, f"Undefined variable ({var_name})")
+            if self.parent is None:
+                raise QwrkRuntimeError(self, f"Undefined variable ({var_name})")
+            
+            self.parent.set_existing_variable(var_name, value)
 
-        self.variables[var_name].value = value
+        var = self.get_variable(var_name)
+        var.value = value
 
 class LiteralType(Enum):
     type_i32 = 0,
@@ -66,13 +74,14 @@ class ASTNodeKind(Enum):
     ast_bin_expr = 6,
 
 class ASTRoot():
-    def __init__(self):
+    def __init__(self, parent_context=None):
         self.kind = ASTNodeKind.ast_root
+        self.context = ASTContext(parent_context)
         self.children = []
 
-    def evaluate(self, context):
+    def evaluate(self):
         for child in self.children:
-            child.evaluate(context)
+            child.evaluate(self.context)
 
     def append_child(self, child):
         self.children.append(child)
@@ -232,9 +241,9 @@ class IfStmt(ASTRoot):
 
     def evaluate(self, context):
         if self.condition.evaluate(context)[0] == True:
-            self.body.evaluate(context)
+            self.body.evaluate()
         elif self.else_branch:
-            self.else_branch.evaluate(context)
+            self.else_branch.evaluate()
 
 class WhileStmt(ASTRoot):
     def __init__(self, condition, body):
@@ -247,7 +256,7 @@ class WhileStmt(ASTRoot):
 
     def evaluate(self, context):
         while self.condition.evaluate(context)[0] == True:
-            self.body.evaluate(context)
+            self.body.evaluate()
 
 class UnaryExpr(ASTRoot):
     def __init__(self, op, stmt):

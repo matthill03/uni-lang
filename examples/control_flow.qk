@@ -1,11 +1,13 @@
-i: i32 = 2;
+i: i32 = 8;
 j: i32 = 0;
 running: bool = true;
 
 if (i < 30) {
     if (i > 5) {
+        name: string = "matthew";
         echo("Wow Number 2");
     }
+    echo(name);
 
     echo("Wow");
 } else if (i == 30) {

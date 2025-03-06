@@ -8,4 +8,4 @@ class Interpreter:
 def interpret(ast_root):
     interpreter = Interpreter(ast_root)
 
-    interpreter.root.evaluate(interpreter.glob_vars)
+    interpreter.root.evaluate()
