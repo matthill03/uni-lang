@@ -27,7 +27,7 @@ class ASTContext:
         if var_name not in self.variables:
             if self.parent is None:
                 raise QwrkRuntimeError(self, f"Undefined variable ({var_name})")
-            
+
             return self.parent.get_variable(var_name)
 
         return self.variables[var_name]
