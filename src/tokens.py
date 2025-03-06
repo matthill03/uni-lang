@@ -20,6 +20,7 @@ class TokenKind(Enum):
     tok_true = 5,
     tok_false = 6,
     tok_if = 34,
+    tok_else = 38,
     tok_while = 35,
 
     # Builtin

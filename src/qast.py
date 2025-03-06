@@ -221,10 +221,11 @@ class VariableAssignment(ASTRoot):
         context.set_existing_variable(self.name, var[0])
 
 class IfStmt(ASTRoot):
-    def __init__(self, condition, body):
+    def __init__(self, condition, body, else_branch=None):
         self.kind = ASTNodeKind.ast_if_stmt
         self.condition = condition
         self.body = body
+        self.else_branch = else_branch
 
     def __str__(self):
         pass
@@ -232,6 +233,8 @@ class IfStmt(ASTRoot):
     def evaluate(self, context):
         if self.condition.evaluate(context)[0] == True:
             self.body.evaluate(context)
+        elif self.else_branch:
+            self.else_branch.evaluate(context)
 
 class WhileStmt(ASTRoot):
     def __init__(self, condition, body):

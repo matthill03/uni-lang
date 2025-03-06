@@ -1,4 +1,4 @@
-"Hello " + "World";
-"hello" + " " + "world";
-"foo" + "bar" == "foobar";
-"10 corgis" != "10" + "corgis";
+"Hello " ++ "World";
+"hello" ++ " " ++ "world";
+"foo" ++ "bar" == "foobar";
+"10 corgis" != "10" ++ "corgis";

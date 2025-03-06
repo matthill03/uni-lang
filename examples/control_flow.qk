@@ -1,10 +1,26 @@
-i: i32 = 0;
+i: i32 = 2;
+j: i32 = 0;
+running: bool = true;
 
 if (i < 30) {
-    echo("Wow");
-};
+    if (i > 5) {
+        echo("Wow Number 2");
+    }
 
-while (i < 10) {
-    echo(i);
-    i = i + 1; 
-};
+    echo("Wow");
+} else if (i == 30) {
+    echo("Woah there");
+} else {
+    echo("No way dude");
+}
+
+while (running) {
+    while (j < 10) {
+        echo(j);
+        j = j + 1;    
+    }
+
+    if (j >= 10) {
+        running = false;
+    }
+}
