@@ -2,6 +2,17 @@ add: fn(a: i32, b: i32) -> i32 {
     return a + b;
 }
 
-result: i32 = add(6, 2);
+subtract: fn(a: i32, b: i32) -> i32 {
+    return a - b;
+}
 
-echo(result);
+main: fn() -> i32 {
+    result: i32 = add(6, 2);
+
+    echo(subtract(result, 1));
+
+    return 0;
+}
+
+
+main();

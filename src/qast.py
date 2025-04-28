@@ -99,6 +99,7 @@ class ASTNodeKind(Enum):
     ast_bin_expr = 6,
     ast_fn_decl = 12,
     ast_fn_call = 13,
+    ast_echo_builtin = 16,
 
 class ASTRoot():
     def __init__(self, parent_context=None):
@@ -485,6 +486,7 @@ class BinaryExpr(ASTRoot):
 
 class EchoBuiltin(ASTRoot):
     def __init__(self, value):
+        self.kind = ASTNodeKind.ast_echo_builtin
         self.value = value
 
     def __str__(self):
