@@ -14,6 +14,7 @@ class TokenKind(Enum):
     tok_close_brace = 37,
     tok_semi = 4,
     tok_colon = 31,
+    tok_comma = 39,
 
     # Keywords
     # Reserved Words
@@ -22,6 +23,7 @@ class TokenKind(Enum):
     tok_if = 34,
     tok_else = 38,
     tok_while = 35,
+    tok_return = 41,
 
     # Builtin
     tok_echo = 27,
@@ -31,6 +33,7 @@ class TokenKind(Enum):
     tok_key_f32 = 33,
     tok_key_bool = 29,
     tok_key_string = 30,
+    tok_key_fn = 40,
 
     # Operators
     # Maths
@@ -60,6 +63,7 @@ class TokenKind(Enum):
 
     # Other
     tok_assign = 23,
+    tok_arrow = 42,
 
     # EOF
     tok_eof = 24,

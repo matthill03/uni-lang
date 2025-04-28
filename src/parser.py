@@ -1,5 +1,5 @@
 from tokens import TokenKind
-from qast import BinaryExpr, UnaryExpr, Number, Boolean, String, Identifier, ASTRoot, VariableAssignment, VariableDeclaration, IfStmt, WhileStmt, EchoBuiltin, Operator, LiteralType
+from qast import BinaryExpr, UnaryExpr, ReturnExpr, Number, Boolean, String, Identifier, ASTRoot, FunctionBody, FunctionDeclaration, FunctionCall, VariableAssignment, VariableDeclaration, IfStmt, WhileStmt, EchoBuiltin, Operator, LiteralType
 
 PRECEDENCE = {
     # Maths
@@ -56,14 +56,60 @@ class Parser:
     def parse_operator(self):
         if self.peek().is_operator():
             return Operator(self.peek().value, self.peek().op_type())
+    
+    def parse_function_declaration(self, name, parent_context):
+        # id: fn(...) -> return_type {
+        #   body
+        # }
+        
+        self.advance_with_expected(TokenKind.tok_key_fn) # fn
+        self.advance_with_expected(TokenKind.tok_open_paren) # (
 
-    def parse_variable_declaration(self):
+        parameters = []
+        while (self.peek().kind != TokenKind.tok_close_paren):
+            if self.peek().kind == TokenKind.tok_comma:
+                self.advance_with_expected(TokenKind.tok_comma)
+
+            var_name = self.peek().value # identifier
+            self.advance_with_expected(TokenKind.tok_id)
+            self.advance_with_expected(TokenKind.tok_colon)
+
+            var_type = self.peek().kind # type
+            self.advance_with_expected(TokenKind.tok_key_i32, TokenKind.tok_key_f32, TokenKind.tok_key_bool, TokenKind.tok_key_string)
+
+            parameters.append((var_name, var_type))
+
+        self.advance_with_expected(TokenKind.tok_close_paren) # )
+        self.advance_with_expected(TokenKind.tok_arrow) # ->
+
+        return_type = self.peek().kind
+        self.advance_with_expected(TokenKind.tok_key_i32, TokenKind.tok_key_f32, TokenKind.tok_key_bool, TokenKind.tok_key_string) # return type
+        self.advance_with_expected(TokenKind.tok_open_brace)  # {
+
+        body = FunctionBody(return_type, parent_context)
+        while self.peek().kind != TokenKind.tok_close_brace:
+            stmt = self.parse_stmt(body.context)
+            body.append_child(stmt)
+
+        # for token in body_tokens:
+        #     print(token)
+        
+        self.advance_with_expected(TokenKind.tok_close_brace)  # }
+
+        return FunctionDeclaration(name, parameters, return_type, body)
+
+    def parse_variable_declaration(self, parent_context):
         # identifier: type = value;
         var_name = self.peek().value # identifier
         self.advance_with_expected(TokenKind.tok_id)
         self.advance_with_expected(TokenKind.tok_colon)
 
         var_type = self.peek().kind # type
+
+        # check if the 'var' is a function
+        if var_type == TokenKind.tok_key_fn:
+            return self.parse_function_declaration(var_name, parent_context)
+
         self.advance_with_expected(TokenKind.tok_key_i32, TokenKind.tok_key_f32, TokenKind.tok_key_bool, TokenKind.tok_key_string)
         self.advance_with_expected(TokenKind.tok_assign)
 
@@ -157,6 +203,25 @@ class Parser:
             TokenKind.tok_id: lambda: Identifier(token.value),
         }
 
+        if token.kind == TokenKind.tok_id and self.peek_offset(1).kind == TokenKind.tok_open_paren:
+            # id(...)
+            fn_name = self.peek().value # id
+            self.advance_with_expected(TokenKind.tok_id)
+            self.advance_with_expected(TokenKind.tok_open_paren) # (
+
+            # ...
+            arguments = []
+            while self.peek().kind != TokenKind.tok_close_paren:
+                if self.peek().kind == TokenKind.tok_comma:
+                    self.advance_with_expected(TokenKind.tok_comma)
+
+                argument = self.parse_bin_expr()
+                arguments.append(argument)
+
+            self.advance_with_expected(TokenKind.tok_close_paren) # )
+
+            return FunctionCall(fn_name, arguments)
+
         if token.kind in LITERAL_MAP:
             self.advance()
             return LITERAL_MAP[token.kind]()
@@ -186,10 +251,16 @@ class Parser:
             param = self.parse_bin_expr()
 
             self.advance_with_expected(TokenKind.tok_close_paren)  # )
-            # self.advance_with_expected(TokenKind.tok_semi)
 
             echo_node = EchoBuiltin(param)
             return echo_node
+        
+        if token.kind == TokenKind.tok_return:
+            # return expr
+            self.advance() # return
+            ret_expr = self.parse_bin_expr() # expr
+
+            return ReturnExpr(ret_expr)
        
         raise ParseError(token, f"Unexpected token ({token.kind})")
 
@@ -215,7 +286,7 @@ class Parser:
     
     def parse_stmt(self, parent_context):
         if self.peek().kind == TokenKind.tok_id and self.peek_offset(1).kind == TokenKind.tok_colon:
-            var_decl = self.parse_variable_declaration()
+            var_decl = self.parse_variable_declaration(parent_context)
             if var_decl == None:
                 return
 

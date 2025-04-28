@@ -6,11 +6,13 @@ RESERVED_WORDS = {
     "while": TokenKind.tok_while,
     "if": TokenKind.tok_if,
     "else": TokenKind.tok_else,
+    "return": TokenKind.tok_return,
     "echo": TokenKind.tok_echo,
     "i32": TokenKind.tok_key_i32,
     "f32": TokenKind.tok_key_f32,
     "string": TokenKind.tok_key_string,
-    "bool": TokenKind.tok_key_bool
+    "bool": TokenKind.tok_key_bool,
+    "fn": TokenKind.tok_key_fn
 }
 
 class Lexer:
@@ -56,6 +58,10 @@ class Lexer:
             self.advance()
             return Token(TokenKind.tok_plus, '+', self.line, self.column)
         elif value == '-':
+            if self.peek_offset(1) == '>':
+                self.advance_n(2)
+                return Token(TokenKind.tok_arrow, "->", self.line, self.column)
+            
             self.advance()
             return Token(TokenKind.tok_dash, '-', self.line, self.column)
         elif value == '*':
@@ -82,6 +88,9 @@ class Lexer:
         elif value == ':':
             self.advance()
             return Token(TokenKind.tok_colon, ':', self.line, self.column)
+        elif value == ',':
+            self.advance()
+            return Token(TokenKind.tok_comma, ',', self.line, self.column)
         elif value == '>':
             if self.peek_offset(1) == '=':
                 self.advance_n(2)

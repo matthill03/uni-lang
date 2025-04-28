@@ -14,9 +14,10 @@ class QwrkRuntimeError(RuntimeError):
         return self.message
 
 class SymbolTableEntry:
-    def __init__(self, type, value):
+    def __init__(self, type, value, parameters=None):
         self.type = type
         self.value = value
+        self.parameters = parameters
 
 class ASTContext:
     def __init__(self, parent=None):
@@ -31,6 +32,15 @@ class ASTContext:
             return self.parent.get_variable(var_name)
 
         return self.variables[var_name]
+
+    def set_new_function(self, fn_name, return_type, parameters, body):
+        if fn_name in self.variables:
+            raise QwrkRuntimeError(self, f"Function name already exists ({fn_name})")
+        
+        for param in parameters:
+            body.context.set_new_variable(param[0], param[1], None)
+        
+        self.variables[fn_name] = SymbolTableEntry(return_type, body, parameters)
 
     def set_new_variable(self, var_name, type, value):
         if var_name in self.variables:
@@ -54,24 +64,41 @@ class LiteralType(Enum):
     type_string = 2,
     type_bool = 3,
 
+TOKEN_TO_LITERAL_TYPE = {
+    TokenKind.tok_key_i32: LiteralType.type_i32,
+    TokenKind.tok_key_f32: LiteralType.type_f32,
+    TokenKind.tok_key_string: LiteralType.type_string,
+    TokenKind.tok_key_bool: LiteralType.type_bool,
+}
+
+def token_to_literal_type(tok_type):
+    if tok_type in TOKEN_TO_LITERAL_TYPE:
+        return TOKEN_TO_LITERAL_TYPE[tok_type]
+    
+    return None
+
 class ASTNodeKind(Enum):
     # Root
     ast_root = 7,
+    ast_fn_body = 15,
 
     # Literals
     ast_num = 0,
     ast_bool = 1,
     ast_str = 2,
     ast_op = 3,
-    ast_id = 7,
+    ast_id = 8,
 
     # Expressions/Statements
     ast_var_decl = 4,
-    ast_var_assign = 8,
-    ast_if_stmt = 9,
-    ast_while_stmt = 10,
+    ast_var_assign = 9,
+    ast_if_stmt = 10,
+    ast_while_stmt = 11,
+    ast_return_stmt = 14,
     ast_unr_expr = 5,
     ast_bin_expr = 6,
+    ast_fn_decl = 12,
+    ast_fn_call = 13,
 
 class ASTRoot():
     def __init__(self, parent_context=None):
@@ -182,6 +209,91 @@ class Operator(ASTRoot):
 
         return False
 
+class FunctionBody(ASTRoot):
+    def __init__(self, return_type, parent_context):
+        self.kind = ASTNodeKind.ast_fn_body
+        self.return_type = token_to_literal_type(return_type)
+        self.context = ASTContext(parent_context)
+        self.children = []
+
+    def __str__(self):
+        return f""
+    
+    def evaluate(self):
+        for child in self.children:
+            if child.kind == ASTNodeKind.ast_return_stmt:
+                ret_val, ret_type = child.evaluate(self.context)
+
+                if ret_type != self.return_type:
+                    raise QwrkRuntimeError(self, f"Invalid return type ({ret_type}), expected ({self.return_type}).")
+
+                return ret_val, ret_type
+            
+            child.evaluate(self.context)
+    
+    def append_child(self, child):
+        self.children.append(child)
+
+class FunctionDeclaration(ASTRoot):
+    def __init__(self, name, parameters, return_type, body):
+        self.kind = ASTNodeKind.ast_fn_decl
+        self.name = name
+        self.parameters = parameters
+        self.return_type = return_type
+        self.body = body
+
+    def __str__(self):
+        return f""
+    
+    def evaluate(self, context):
+        if self.return_type in TOKEN_TO_LITERAL_TYPE:
+            self.return_type = TOKEN_TO_LITERAL_TYPE[self.return_type]
+        else:
+            raise QwrkRuntimeError(self, f"Return Type ({self.return_type}) not a supported type")
+        
+        new_parameters = []
+        for parameter in self.parameters:
+            param_val = parameter[0]
+            param_type = parameter[1]
+
+            if param_type in TOKEN_TO_LITERAL_TYPE:
+                param_type = TOKEN_TO_LITERAL_TYPE[param_type]
+            else:
+                raise QwrkRuntimeError(self, f"({param_val}) -> Parameter Type ({param_type}) not a supported type")
+            
+            new_parameters.append((param_val, param_type))
+        
+        self.parameters = new_parameters
+            
+        context.set_new_function(self.name, self.return_type, self.parameters, self.body)
+
+class FunctionCall(ASTRoot):
+    def __init__(self, name, arguments):
+        self.kind = ASTNodeKind.ast_fn_call
+        self.name = name
+        self.arguments = arguments
+
+    def __str__(self):
+        return f""
+    
+    def evaluate(self, context):
+        fn = context.get_variable(self.name)
+
+        if len(fn.parameters) != len(self.arguments):
+            raise QwrkRuntimeError(self, f"Invalid argument length: ({len(self.arguments)} )given, but expected ({len(fn.parameters)}).")
+        
+        for i in range(len(fn.parameters)):
+            arg = self.arguments[i]
+            param = fn.parameters[i]
+
+            arg_val, arg_type = arg.evaluate(context)
+            if arg_type != param[1]:
+                raise QwrkRuntimeError(self, f"Invalid argument type: ({arg_type}) given, but expected ({param[1]}).")
+            
+            fn.value.context.set_existing_variable(param[0], arg_val)
+        
+        return fn.value.evaluate()
+
 class VariableDeclaration(ASTRoot):
     def __init__(self, name, type, value):
         self.kind = ASTNodeKind.ast_var_decl
@@ -189,21 +301,14 @@ class VariableDeclaration(ASTRoot):
         self.type = type
         self.value = value
 
-        self.TOKEN_TO_LITERAL_TYPE = {
-            TokenKind.tok_key_i32: LiteralType.type_i32,
-            TokenKind.tok_key_f32: LiteralType.type_f32,
-            TokenKind.tok_key_string: LiteralType.type_string,
-            TokenKind.tok_key_bool: LiteralType.type_bool,
-        }
-
     def __str__(self):
         return f"(Name: {self.name}, Type: {self.type}, Value: {self.value})"
 
     def evaluate(self, context):
-        if self.type in self.TOKEN_TO_LITERAL_TYPE:
-            self.type = self.TOKEN_TO_LITERAL_TYPE[self.type]
+        if self.type in TOKEN_TO_LITERAL_TYPE:
+            self.type = TOKEN_TO_LITERAL_TYPE[self.type]
         else:
-            raise QwrkRuntimeError(self, f"Type ({self.type}) not a supported type")
+            raise QwrkRuntimeError(self, f"({self.name}) -> Type ({self.type}) not a supported type")
 
         var, var_type = self.value.evaluate(context)
         if var_type != self.type:
@@ -389,3 +494,14 @@ class EchoBuiltin(ASTRoot):
         print(self.value.evaluate(context)[0])
 
  # type: ignore
+
+class ReturnExpr(ASTRoot):
+    def __init__(self, expr):
+        self.kind = ASTNodeKind.ast_return_stmt
+        self.expr = expr
+
+    def __str__(self):
+        return f""
+    
+    def evaluate(self, context):
+        return self.expr.evaluate(context)
