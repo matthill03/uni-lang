@@ -6,10 +6,16 @@ subtract: fn(a: i32, b: i32) -> i32 {
     return a - b;
 }
 
+print_name: fn() -> string {
+    return "matthew";
+}
+
 main: fn() -> i32 {
     result: i32 = add(6, 2);
 
     echo(subtract(result, 1));
+
+    echo(print_name());
 
     return 0;
 }

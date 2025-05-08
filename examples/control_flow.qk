@@ -10,7 +10,6 @@ if (i < 30) {
         echo(name);
     }
     echo(name);
-
 } else if (i == 30) {
     echo("Woah there");
 } else {

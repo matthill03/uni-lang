@@ -10,6 +10,9 @@ def get_file_content(file_path):
 
     return content
 
+def print_usage():
+    print("USAGE: python src/main.py <file_to_run>")
+
 def process(src):
     tokens = lex(src)
     ast_root = parse(tokens)
@@ -33,7 +36,7 @@ def run_interactive():
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        run_interactive()
+        print_usage()
         exit(0)
 
     run_file(sys.argv[1])
