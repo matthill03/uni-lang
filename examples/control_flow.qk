@@ -1,4 +1,4 @@
-i: i32 = 8;
+i: i32 = 30;
 j: i32 = 0;
 running: bool = true;
 
@@ -6,12 +6,10 @@ if (i < 30) {
     name: string = "hill";
 
     if (i > 5) {
-        name = "matthew";
+        name: string = "matthew";
         echo(name);
     }
     echo(name);
-} else if (i == 30) {
-    echo("Woah there");
 } else {
     echo("No way dude");
 }

@@ -165,6 +165,8 @@ class Parser:
 
                 self.advance_with_expected(TokenKind.tok_close_brace) # }
 
+                else_branch = IfStmt(Boolean("true"), else_body, None)
+
         return IfStmt(condition, body, else_branch)
     
     def parse_while_stmt(self, parent_context):

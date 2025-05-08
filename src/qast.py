@@ -356,7 +356,7 @@ class IfStmt(ASTRoot):
         if self.condition.evaluate(context)[0] == True:
             self.body.evaluate()
         elif self.else_branch:
-            self.else_branch.evaluate()
+            self.else_branch.evaluate(context)
 
 class WhileStmt(ASTRoot):
     def __init__(self, condition, body):
