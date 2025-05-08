@@ -44,7 +44,14 @@ class ASTContext:
 
     def set_new_variable(self, var_name, type, value):
         if var_name in self.variables:
-            raise QwrkRuntimeError(self, f"Variable name already exists ({var_name})")
+            if self.parent is None:
+                raise QwrkRuntimeError(self, f"Variable name already exists ({var_name})")
+
+            try:
+                par_var = self.parent.get_variable(var_name)
+            except:
+                print("Var does not exist")
+
 
         self.variables[var_name] = SymbolTableEntry(type, value)
 
@@ -52,7 +59,7 @@ class ASTContext:
         if var_name not in self.variables:
             if self.parent is None:
                 raise QwrkRuntimeError(self, f"Undefined variable ({var_name})")
-            
+
             self.parent.set_existing_variable(var_name, value)
 
         var = self.get_variable(var_name)

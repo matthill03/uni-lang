@@ -9,8 +9,8 @@ if (i < 30) {
         name = "matthew";
         echo(name);
     }
-
     echo(name);
+
 } else if (i == 30) {
     echo("Woah there");
 } else {
@@ -20,7 +20,7 @@ if (i < 30) {
 while (running) {
     while (j < 10) {
         echo(j);
-        j = j + 1;    
+        j = j + 1;
     }
 
     if (j >= 10) {

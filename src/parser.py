@@ -283,7 +283,7 @@ class Parser:
             lhs = BinaryExpr(lhs, op, rhs)
 
         return lhs
-    
+
     def parse_stmt(self, parent_context):
         if self.peek().kind == TokenKind.tok_id and self.peek_offset(1).kind == TokenKind.tok_colon:
             var_decl = self.parse_variable_declaration(parent_context)
